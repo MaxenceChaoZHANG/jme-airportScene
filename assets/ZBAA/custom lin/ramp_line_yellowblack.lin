@@ -1,0 +1,9 @@
+A
+850
+LINE_PAINT
+TEXTURE ramp_line_yellowblack.png
+LOD3000
+TEX_WIDTH 256
+SCALE 3.0 3.0
+S_OFFSET 0	109	145	255
+LAYER_GROUP markings +2

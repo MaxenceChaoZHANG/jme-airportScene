@@ -1,0 +1,8 @@
+A
+850
+DRAPED_POLYGON
+
+LAYER_GROUP airports +3
+TEXTURE_NOWRAP arrow.png
+SURFACE asphalt
+SCALE 10 10

@@ -1,0 +1,27 @@
+A
+800
+OBJ
+
+TEXTURE	../textures/Draped_Ground_Elements.png
+TEXTURE_DRAPED		../textures/Draped_Ground_Elements.png
+TEXTURE_DRAPED_NORMAL 1.0 ../textures/Draped_Ground_Elements_NML.png
+EXPORT lib/airport/Ramp_Equipment/Ramp_Parking_Stripe.obj Ramp_Equipment/RampParking_Stripe.obj
+GLOBAL_specular 1.0
+ATTR_LOD_draped 3000
+POINT_COUNTS	4 0 0 6
+
+VT	  14.9471    0.0000    4.9959	 0.000  1.000 -0.000	0.2394 0.9487
+VT	 -15.9219    0.0000    4.9959	 0.000  1.000 -0.000	0.4477 0.9487
+VT	 -15.9219    0.0000  -39.2414	 0.000  1.000 -0.000	0.4477 0.3518
+VT	  14.9471    0.0000  -39.2414	 0.000  1.000 -0.000	0.2394 0.3518
+
+IDX	0
+IDX	1
+IDX	2
+IDX	0
+IDX	2
+IDX	3
+
+ATTR_draped
+# Image: //../textures/Draped_Ground_Elements.png
+TRIS	0 6

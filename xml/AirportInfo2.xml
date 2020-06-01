@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<airports> 
+  <airport airportId="1"> 
+    <name>天津滨海国际机场</name>  
+    <icao_code>ZBTJ</icao_code>  
+    <lontitude>117.35009765625</lontitude>  
+    <latitude>39.12950134277344</latitude>  
+    <file_path>assets/ZBTJ/Earth nav data/+30+110/+39+117.txt</file_path> 
+  </airport>  
+  <airport airportId="2"> 
+    <name>北京首都国际机场</name>  
+    <icao_code>ZBAA</icao_code>  
+    <lontitude>116.593155</lontitude>  
+    <latitude>40.06822</latitude>  
+    <file_path>assets/ZBAA/Earth nav data/+40+110/+40+116.txt</file_path> 
+  </airport>  
+  <airport airportId="3"> 
+    <name>上海虹桥国际机场</name>  
+    <icao_code>ZSSS</icao_code>  
+    <lontitude>121.328559644</lontitude>  
+    <latitude>31.203323129</latitude>  
+    <file_path>assets/ZSSS/Earth nav data/+30+120/+31+121.txt</file_path> 
+  </airport> 
+</airports>
