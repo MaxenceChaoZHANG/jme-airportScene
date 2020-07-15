@@ -53,8 +53,16 @@
 └── README.md
 ```
 ### 环境依赖
-- jMonkeyEngine 3.2.4 stable  <https://github.com/jMonkeyEngine/jmonkeyengine>
-- jmathplot.jar  <https://github.com/yannrichet/jmathplot>
-- dom4j-2.1.1.jar  <https://github.com/dom4j/dom4j>
+- jMonkeyEngine 3.2.4 stable  ：https://github.com/jMonkeyEngine/jmonkeyengine
+- jMathplot.jar  ：https://github.com/yannrichet/jmathplot>
+- dom4j-2.1.1.jar  ：https://github.com/dom4j/dom4j
 
 说明：jmathplot用于绘制轨迹进行程序调试，主程序可以不使用
+### 仓库引用
+- JME Atmosphere : To manage sky/sun/moon/cloud/star : https://github.com/jayfella/jme-atmosphere
+- JME Fastnoise : Dependency for world and texture : https://github.com/jayfella/jme-fastnoise
+- JME Minimap : Minimap for my project : https://github.com/jayfella/jme-minimap
+### 文档参考
+- JME官网 ：https://jmonkeyengine.org/
+- JME中文网 ：http://www.jmecn.net/
+
