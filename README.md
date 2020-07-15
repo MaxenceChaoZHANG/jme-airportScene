@@ -53,6 +53,7 @@
 └── README.md
 ```
 ### 环境依赖
-- jMonkeyEngine 3.2.4 stable<https://github.com/jMonkeyEngine/jmonkeyengine>
-- jmathplot.jar<https://github.com/yannrichet/jmathplot>
-- dom4j-2.1.1.jar<https://github.com/dom4j/dom4j>
+- jMonkeyEngine 3.2.4 stable  <https://github.com/jMonkeyEngine/jmonkeyengine>
+- jmathplot.jar  <https://github.com/yannrichet/jmathplot>
+- dom4j-2.1.1.jar  <https://github.com/dom4j/dom4j>
+说明：jmathplot用于绘制轨迹进行程序调试，主程序可以不使用
