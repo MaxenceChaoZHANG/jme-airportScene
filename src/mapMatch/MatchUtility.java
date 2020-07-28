@@ -1,5 +1,7 @@
 package mapMatch;
 
+import java.util.Random;
+
 import javax.vecmath.Vector2d;
 
 import com.jme3.math.FastMath;
@@ -20,15 +22,17 @@ public class MatchUtility {
 //	     Point p1=new Point(0.0,0.0);
 //	     Point p2=new Point(-1,-1);
 //	     System.out.println(getDeltaTheta(p1, p2,45));
-		
-	     System.out.println(getGauss(1));
+		Random random = new Random();
+		for(int i=0;i<100;i++) {
+	     System.out.println(getGauss(random.nextGaussian()*10));
+	     }
 		
 	}
 	
 	/**GPS定位误差--正太分布
 	 * 
 	 */
-	public static double sigma=150;
+	public static double sigma=10;
 	public static double getGauss(double d) {
 		return 1.0/( Math.sqrt(2.0*Math.PI)*sigma)*Math.exp(  -Math.pow(d, 2) /  (2.0*Math.pow(sigma, 2))  );
 	}
@@ -63,8 +67,8 @@ public class MatchUtility {
     	 {angle=Math.PI-angle;} 	
     	return angle;
 		
-	}
-
+	}	
+	
 	
 	
 	
@@ -85,6 +89,16 @@ public class MatchUtility {
         t.setLatitude(foot.y);
         
         return t;
+	}
+	public static Point getFootNoChange(RoadPoint r1,RoadPoint r2,TrackPoint t){
+		
+        Point p1=new Point(r1.getLongitude(),r1.getLatitude());
+        Point p2=new Point(r2.getLongitude(),r2.getLatitude());
+        Point p3=new Point(t.getLongitude(),t.getLatitude());
+        
+        Point foot=getFoot(p1,p2,p3);
+        
+        return foot;
 	}
 	/**直线外一点的垂足
 	 * @param p1,p2 直线两点 p3 线外一点

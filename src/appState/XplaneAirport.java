@@ -51,7 +51,8 @@ public class XplaneAirport extends SimpleApplication {
 	                           new PickAppState(),
         		               new MultipleWindowState(),
         		               new AnimState(),
-        		               new MiniMapState(rootNode,1200,200)
+        		               new MiniMapState(rootNode,1200,200),
+        		               new XplaneWeatherState()
         		               );          
         // »·¾³¹â
         AmbientLight ambient = new AmbientLight();

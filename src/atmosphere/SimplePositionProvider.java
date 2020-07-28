@@ -74,7 +74,7 @@ public class SimplePositionProvider implements PositionProvider  {
     public SimplePositionProvider(){
         //Year, month, day, hour, minute, multiplier.
     	//Calendar(int year, int month, int day, int hour, int minute, float tMult)
-        calendar = new Calendar(2020,4,30,5,0,1000000);
+        calendar = new Calendar(2020,2,2,18,0,1000000);
         //月亮周期29天，计算当月处于29天中哪一天
         moonDaysCount = calendar.getDayInYear() % daysInMoonCycle;
         updateMoonPhase();

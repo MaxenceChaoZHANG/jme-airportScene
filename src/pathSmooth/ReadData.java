@@ -38,7 +38,7 @@ public class ReadData {
 			if(lineNumber!=1)
 			{
 				trackTemp=createTrack(line,lineNumber);
-				System.out.println(lineNumber);
+//				System.out.println(lineNumber);
 				trackPointTemp=createTrackPoint(line,lineNumber);
 				//判断是否数据为空
 				if(trackTemp!=null && trackPointTemp!=null) {

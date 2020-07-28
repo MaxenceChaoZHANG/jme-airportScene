@@ -62,7 +62,8 @@ public class RoadXMLUtility {
 			        	    RoadPoint p1=getRoadPoint(road.getRoadPoints(),id1);
 			        	    RoadPoint p2=getRoadPoint(road.getRoadPoints(),id2);
 			        	    roadEdge.setP1(p1);
-			        	    roadEdge.setP2(p2); 
+			        	    roadEdge.setP2(p2);
+			        	    roadEdge.computeDist();
 			        		roadWay.addRoadEdge(roadEdge);
 			        	   }//½áÊøÄÚ²ãfor
 			        	}

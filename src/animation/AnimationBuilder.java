@@ -1,4 +1,5 @@
 package animation;
+import java.awt.Color;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -6,7 +7,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
+import javax.swing.JFrame;
 import javax.vecmath.Vector3d;
+
+import org.dom4j.DocumentException;
+import org.math.plot.Plot2DPanel;
 
 import com.jme3.animation.Animation;
 import com.jme3.animation.AnimationFactory;
@@ -14,7 +19,13 @@ import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 
 import dataEntity.AirportInfo;
+import dataEntity.Road;
+import dataEntity.RoadEdge;
+import dataEntity.RoadPoint;
+import dataEntity.RoadWay;
 import dataEntity.TrackPoint;
+import mapMatch.MapMatch;
+import mapMatch.road.RoadXMLUtility;
 import pathSmooth.Mercator;
 
 public class AnimationBuilder {
@@ -33,11 +44,11 @@ public class AnimationBuilder {
         private int transKeyFrames;
         protected float[] transKeyFramesTimes;
         protected Vector3f[] keyFramesTranslation;
-
+       
+        //路网数据
+        Road road=null;
         
-    	//天津滨海机场
-//    	float lon=117.350099184f;
-//    	float lat=39.129502365f;
+        //机场中心经纬度，及其平面坐标
     	double lon;
     	double lat;
     	double[] temp;
@@ -63,6 +74,15 @@ public class AnimationBuilder {
         }
         
         public Animation buildAnimation() {
+        	
+    		// 读取路网数据
+    	   road = null;
+    		try {
+    			road = RoadXMLUtility.ReadXML();
+    		} catch (DocumentException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		}
 
         	computeTime();
         	computePosition();
@@ -131,19 +151,84 @@ public class AnimationBuilder {
 			} catch (IOException e) {
 			    e.printStackTrace();
 			}
-			//去除位置重复点 
+			//打印原始轨迹点
 			System.out.println("原始");
 			System.out.println(copy);
-			copy=pathSmooth.RemoveDuplicatesUtil.RemoveDuplicates(copy);
-			System.out.println("去重");
-			System.out.println(copy);
-			//角度判断算法，简化轨轨迹
-			copy=pathSmooth.AngleSimplifyUtil.DeleteErrorPoint(copy,70);
-//			System.out.println("折返点处理");
+			
+			//去除位置重复点 
+//			copy=pathSmooth.RemoveDuplicatesUtil.RemoveDuplicates(copy);
+//			System.out.println("去重");
 //			System.out.println(copy);
 			
+			//地图匹配算法
+			copy=MapMatch.SimpleMapMatch(road,copy);
+	        System.out.println("地图匹配");
+			System.out.println(copy);
+			
+			
+//			ArrayList<RoadWay> roadWays = road.getRoadWays();
+//			// 从RoadWay中抽取所有的RoadEdge
+//			ArrayList<RoadEdge> roadEdges = new ArrayList<RoadEdge>();
+//			int wayNumber = roadWays.size();
+//			for (int i = 0; i < wayNumber; i++) {
+//				roadEdges.addAll(roadWays.get(i).getRoadEdges());
+//			}
+//			// 定义颜色
+//			Color red = new Color(255, 0, 0);
+//			Color black = new Color(0, 0, 0);
+//			Color blue = new Color(0, 0, 255);
+//			Color green = new Color(0, 255, 0);
+//
+//			// 定义画图面板
+//			Plot2DPanel plot = new Plot2DPanel();
+//
+//			// 遍历路径边，绘制路径边（黑色线条）
+//			int edgeNumber = roadEdges.size();
+//			RoadEdge tempEdge = null;
+//			RoadPoint roadPoint1 = null;
+//			RoadPoint roadPoint2 = null;
+//			for (int j = 0; j < edgeNumber; j++) {
+//				tempEdge = roadEdges.get(j);
+//				roadPoint1 = tempEdge.getP1();
+//				roadPoint2 = tempEdge.getP2();
+//				double[] point1 = { roadPoint1.getLongitude(), roadPoint1.getLatitude() };
+//				double[] point2 = { roadPoint2.getLongitude(), roadPoint2.getLatitude() };
+//				plot.addLinePlot("", black, point1, point2);
+//			}
+		
+			//角度判断算法，简化轨轨迹
+			copy=pathSmooth.AngleSimplifyUtil.DeleteErrorPoint(copy,90);
+			System.out.println("折返点处理");
+			System.out.println(copy);
+//			
+//			
+//			for (int i = 0; i < copy.size() - 1; i++) {
+//			TrackPoint Point1 = copy.get(i);
+//			TrackPoint Point2 = copy.get(i + 1);
+//			double[] point1 = { Point1.getLongitude(), Point1.getLatitude() };
+//			double[] point2 = { Point2.getLongitude(), Point2.getLatitude() };
+//
+//			plot.addLinePlot("", red, point1, point2);
+//		}
+			
+//			// set the label of the plot panel
+//			plot.setAxisLabel(0, " longitude");
+//			plot.setAxisLabel(1, "latuitude");
+//			plot.setSize(1200, 1200);
+//			// create a frame
+//			JFrame frame = new JFrame("A plot test");
+//			// set the size of the frame
+//			frame.setSize(1200, 1200);
+//			// set the content of the frame as the plot panel
+//			frame.setContentPane(plot);
+//			frame.setVisible(true);
+			
+			
+			
+			
+			
 			//道格拉斯佩格算法，简化轨迹，阈值单位m
-			copy=pathSmooth.DouglasPeuckerUtil.DouglasPeucker(copy,20);
+//			copy=pathSmooth.DouglasPeuckerUtil.DouglasPeucker(copy,20);
 //			System.out.println("轨迹简化处理");
 //			System.out.println(copy);
         	

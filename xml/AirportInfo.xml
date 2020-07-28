@@ -11,8 +11,8 @@
   <airport airportId="2"> 
     <name>北京首都国际机场</name>  
     <icao_code>ZBAA</icao_code>  
-    <lontitude>116.593155</lontitude>  
-    <latitude>40.06822</latitude>  
+    <lontitude>116.59315490722656</lontitude>  
+    <latitude>40.06821823120117</latitude>  
     <file_path>assets/ZBAA/Earth nav data/+40+110/+40+116.txt</file_path> 
   </airport>  
   <airport airportId="3"> 

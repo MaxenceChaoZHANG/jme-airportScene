@@ -22,14 +22,14 @@ public class AnimState extends BaseAppState {
 	private ArrayList<Track> tracks;
 	//private String trackData="C:\\Users\\HP\\Desktop\\工作报告\\Track_de_1.txt";
 	private String trackData="track/Track_de_1.txt";
-	
+	 //当前机场信息
 	private AirportInfo currentAirportInfo;
 
-
+	 //当前机场信息的get,set方法
 	public AirportInfo getCurrentAirportInfo() {
 		return currentAirportInfo;
 	}
-
+	//在AirportSetting中调用
 	public void setCurrentAirportInfo(AirportInfo currentAirportInfo) {
 		this.currentAirportInfo = currentAirportInfo;
 		animationBuilder.setLonLat(currentAirportInfo.getLontitude(), currentAirportInfo.getLatitude());

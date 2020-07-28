@@ -47,6 +47,7 @@ public class SettingFrame extends JFrame {
 	 */
 	public SettingFrame(AppStateManager stateManager) {
 		this.stateManager=stateManager;
+		//初始化时，读取机场配置文件，获得机场信息
 		try {
 			this.airportInfos=XMLUtility.ReadXML();
 		} catch (DocumentException e) {

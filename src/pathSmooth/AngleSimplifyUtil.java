@@ -1,8 +1,9 @@
 package pathSmooth;
 
-import java.io.IOException;
 import java.util.ArrayList;
+
 import javax.vecmath.Vector2d;
+
 import com.jme3.math.FastMath;
 
 import dataEntity.TrackPoint;
@@ -44,6 +45,9 @@ import dataEntity.TrackPoint;
 	          
 	          direction1=direction(lon1,lat1,lon,lat);
 	          direction2=direction(lon,lat,lon2,lat2);
+	          if(direction1==0||direction2==0)
+	        	  continue;
+	        	  
 	          
 	          System.out.print("headng1:"+heading1+" direction1:"+direction1);
 	          System.out.println("headng2:"+heading2+" direction2:"+direction2);
@@ -104,8 +108,6 @@ import dataEntity.TrackPoint;
 		   		  System.out.println("DeleteErrorPoint:传入路径点数组为空");
 		   		  return null;
 		   		  }
-	    	 
-
 //	    	ArrayList<TrackPoint> result=new ArrayList<TrackPoint>();
 //	    	result.add(trackPoints.get(0));
 //	    	System.out.println(trackPoints);
@@ -164,6 +166,10 @@ import dataEntity.TrackPoint;
 	      public static double direction(double lon1,double lat1,double lon2,double lat2) {
 
 	        	Vector2d vector = new Vector2d(lon2-lon1, lat2-lat1);
+	        	//驻点
+	        	if(vector.x==0&&vector.y==0)
+	        		return 0;
+	        	
 	        	Vector2d north   = new Vector2d(0.0,1.0);
 	        	double angle= (FastMath.RAD_TO_DEG*(vector.angle(north)));//angle方法返回弧度，范围0~pi
 	        	double heading;
@@ -199,7 +205,6 @@ import dataEntity.TrackPoint;
 //	    			System.out.println(tracks.get(i));	
 //	    		}
 //
-	    	 double a=117.3504316806793;
-	    	 System.out.println(a);
+	    	 System.out.println(direction(0, 0, 0, 0));
 			}
 	}

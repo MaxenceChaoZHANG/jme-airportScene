@@ -18,6 +18,8 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
+import com.jme3.post.FilterPostProcessor;
+import com.jme3.post.filters.FogFilter;
 import com.jme3.renderer.Camera;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
@@ -48,15 +50,26 @@ public class MultipleWindowState extends BaseAppState {
 	private Map<String,FlyByCamera> flyCamMap = new HashMap<String,FlyByCamera>();
 	
 	
+	FilterPostProcessor fpp;
+	
 	public  Camera getCurrentCam() {
 		return currentCam;
 	}
+    public ViewPort getLeftViewPort() {
+		return leftViewPort;
+	}
+	public ViewPort getRightViewPort() {
+		return rightViewPort;
+	}
+
+
 
     public MultipleWindowState() {
 
     }
 
-    @Override
+
+	@Override
     protected void initialize(Application app) {
     	
     	
@@ -68,7 +81,7 @@ public class MultipleWindowState extends BaseAppState {
         this.ctx = (AwtPanelsContext) ((SimpleApplication)app).getContext();        
         this.inputManager=app.getInputManager();
     	this.renderManager=app.getRenderManager();
-    	
+    	fpp = new FilterPostProcessor(app.getAssetManager());
 		SwingUtilities.invokeLater(new Runnable(){
 		    @Override
 			public void run()
@@ -85,14 +98,14 @@ public class MultipleWindowState extends BaseAppState {
 	        
 				leftPanel = ctx.createPanel(PaintMode.Accelerated);
 				leftPanel.setName("Left");
-				leftPanel.setPreferredSize(new Dimension(800, 600));
+				leftPanel.setPreferredSize(new Dimension(500, 400));
 		
 				mainPanel = ctx.createPanel(PaintMode.Accelerated);
 				mainPanel.setName("Main");
-		        mainPanel.setPreferredSize(new Dimension(800, 600));
+		        mainPanel.setPreferredSize(new Dimension(500, 400));
 		        
 		        rightPanel = ctx.createPanel(PaintMode.Accelerated);
-		        rightPanel.setPreferredSize(new Dimension(800, 600));
+		        rightPanel.setPreferredSize(new Dimension(500, 400));
 		        rightPanel.setName("Right");
 		        
 		        ctx.setInputSource(leftPanel);
@@ -186,7 +199,7 @@ public class MultipleWindowState extends BaseAppState {
 		rightViewPort.setClearFlags(true, true, true);
 		rightViewPort.attachScene(rootNode);
 		rightViewPort.setBackgroundColor(ColorRGBA.Gray);
-    	
+		
     }
 
     @Override

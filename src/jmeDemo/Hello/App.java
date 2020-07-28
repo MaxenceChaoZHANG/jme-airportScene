@@ -54,9 +54,9 @@ public class App extends SimpleApplication {
         //ÉèÖÃ±³¾°É«°×É«
         viewPort.setBackgroundColor(ColorRGBA.White);
         
-		createArrow(new Vector3f(40, 0, 0), ColorRGBA.Green);
-	    createArrow(new Vector3f(0, 40, 0), ColorRGBA.Red);
-	    createArrow(new Vector3f(0, 0, 40), ColorRGBA.Blue);
+//		createArrow(new Vector3f(40, 0, 0), ColorRGBA.Green);
+//	    createArrow(new Vector3f(0, 40, 0), ColorRGBA.Red);
+//	    createArrow(new Vector3f(0, 0, 40), ColorRGBA.Blue);
         
         rootNode.attachChild(spatial);
         rootNode.addLight(ambient);

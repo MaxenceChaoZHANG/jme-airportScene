@@ -88,46 +88,56 @@ public class AirportSetting extends JPanel {
 		cbBSelect.setSelectedIndex(0);
 		add(cbBSelect);
 		
+		//lable机场名字
 		JLabel labelName = new JLabel("\u673A\u573A\u540D\u79F0\uFF1A");
 		labelName.setBounds(70, 102, 75, 18);
 		add(labelName);
-		
+		//text机场名字
 		txtName = new JTextField();
 		txtName.setBounds(151, 99, 218, 24);
 		add(txtName);
 		txtName.setColumns(10);
 		
+		
+		//lable机场代码
 		JLabel labelCode = new JLabel("ICAO\u4EE3\u7801\uFF1A");
 		labelCode.setBounds(70, 131, 77, 18);
 		add(labelCode);
-		
+		//text机场代码
 		txtCode = new JTextField();
 		txtCode.setBounds(151, 128, 218, 24);
 		add(txtCode);
 		txtCode.setColumns(10);
 		
+		
+		//lable机场中心经度
 		JLabel labelLontitude = new JLabel("\u673A\u573A\u7ECF\u5EA6\uFF1A");
 		labelLontitude.setBounds(72, 158, 75, 18);
 		add(labelLontitude);
-		
+		//text机场中心经度
 		txtLontitude = new JTextField();
 		txtLontitude.setBounds(151, 155, 218, 24);
 		add(txtLontitude);
 		txtLontitude.setColumns(10);
 		
+		
+		//lable机场中心纬度
 		JLabel labelLatitude = new JLabel("\u673A\u573A\u7EAC\u5EA6\uFF1A");
 		labelLatitude.setBounds(72, 186, 75, 18);
 		add(labelLatitude);
-		
+		//text机场中心纬度
 		txtLatitude = new JTextField();
 		txtLatitude.setBounds(151, 183, 218, 24);
 		add(txtLatitude);
 		txtLatitude.setColumns(10);
 		
+		
+		
+		//lable机场地景文件
 		JLabel labelScene = new JLabel("\u5730\u666F\u6587\u4EF6\uFF1A");
 		labelScene.setBounds(72, 213, 75, 18);
 		add(labelScene);
-		
+		//text机场地景文件
 		txtScene = new JTextField();
 		txtScene.setBounds(151, 210, 218, 24);
 		add(txtScene);

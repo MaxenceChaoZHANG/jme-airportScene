@@ -1,20 +1,76 @@
 package mapMatch;
 
+import java.awt.Color;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.JFrame;
+
+import org.dom4j.DocumentException;
+import org.math.plot.Plot2DPanel;
+
+import dataEntity.Road;
 import dataEntity.RoadEdge;
 import dataEntity.RoadPoint;
 import dataEntity.RoadWay;
+import dataEntity.Track;
 import dataEntity.TrackPoint;
 import mapMatch.geoHash.GeoHashHelper;
 import mapMatch.geoHash.MyGeoHashHelper;
+import mapMatch.road.RoadXMLUtility;
 
 public class MapMatch {
 	
-	public static ArrayList<TrackPoint> SimpleMapMatch(ArrayList<RoadPoint> roadPoints,ArrayList<RoadEdge> roadEdges,ArrayList<TrackPoint> trackPoints) {
+	public static ArrayList<TrackPoint> SimpleMapMatch(Road road,ArrayList<TrackPoint> trackPoints) {
+		
+		ArrayList<RoadPoint> roadPoints = road.getRoadPoints();
+		ArrayList<RoadWay> roadWays = road.getRoadWays();
+
+		// 从RoadWay中抽取所有的RoadEdge
+		ArrayList<RoadEdge> roadEdges = new ArrayList<RoadEdge>();
+		int wayNumber = roadWays.size();
+		for (int i = 0; i < wayNumber; i++) {
+			roadEdges.addAll(roadWays.get(i).getRoadEdges());
+		}
+		
+//		// 定义颜色
+//		Color red = new Color(255, 0, 0);
+//		Color black = new Color(0, 0, 0);
+//		Color blue = new Color(0, 0, 255);
+//		Color green = new Color(0, 255, 0);
+
+//		// 定义画图面板
+//		Plot2DPanel plot = new Plot2DPanel();
+
+//		// 遍历路径边，绘制路径边（黑色线条）
+//		int edgeNumber = roadEdges.size();
+//		RoadEdge tempEdge = null;
+//		RoadPoint roadPoint1 = null;
+//		RoadPoint roadPoint2 = null;
+//		for (int j = 0; j < edgeNumber; j++) {
+//			tempEdge = roadEdges.get(j);
+//			roadPoint1 = tempEdge.getP1();
+//			roadPoint2 = tempEdge.getP2();
+//			double[] point1 = { roadPoint1.getLongitude(), roadPoint1.getLatitude() };
+//			double[] point2 = { roadPoint2.getLongitude(), roadPoint2.getLatitude() };
+//			plot.addLinePlot("", black, point1, point2);
+//		}
+
+//		// 绘制原始轨迹（蓝色线条）
+//		for (int i = 0; i < trackPoints.size() - 1; i++) {
+//			TrackPoint Point1 = trackPoints.get(i);
+//			TrackPoint Point2 = trackPoints.get(i + 1);
+//			double[] point1 = { Point1.getLongitude(), Point1.getLatitude() };
+//			double[] point2 = { Point2.getLongitude(), Point2.getLatitude() };
+//
+//			plot.addLinePlot("", blue, point1, point2);
+//		}
+
+		
 		//创建geoHashHepler对象
-		GeoHashHelper geoHash = new GeoHashHelper();
-//		MyGeoHashHelper geoHash = new MyGeoHashHelper();
+//		GeoHashHelper geoHash = new GeoHashHelper();
+		MyGeoHashHelper geoHash = new MyGeoHashHelper();
 		List<String> geoHashCode=null;
 		
 		
@@ -22,12 +78,12 @@ public class MapMatch {
 		int trackPointNumber=trackPoints.size();
 		TrackPoint temp1=null;
 		for(int i=0;i<trackPointNumber;i++) {
-			//获取当前点附近的9个geohashCode
+			//1.获取当前点附近的9个geohashCode
 			temp1=trackPoints.get(i);
-//			geoHashCode=geoHash.aroundWith7Char(temp1.getLatitude(), temp1.getLongitude()) ;
-			geoHashCode=geoHash.around(temp1.getLatitude(), temp1.getLongitude()) ;
+			geoHashCode=geoHash.aroundWith7Char(temp1.getLatitude(), temp1.getLongitude()) ;
+//			geoHashCode=geoHash.around(temp1.getLatitude(), temp1.getLongitude()) ;
 			
-			//遍历每一个路网点，根据geoHash寻找距离当前轨迹点比较近的点,并存到集合中 
+			//2.遍历每一个路网点，根据geoHash寻找距离当前轨迹点比较近的点,并存到集合中 
 			ArrayList<RoadPoint> neighborPoints = new ArrayList<RoadPoint>();
 			int roadPointNumber=roadPoints.size();
 			RoadPoint temp2=null;
@@ -73,7 +129,7 @@ public class MapMatch {
 
 			}//得到距离当前轨迹点比较近的点的集合中
 			
-			//根据比较近的路径点寻找附近的路近段，并存到集合中
+			//3.根据比较近的路径点寻找附近的路近段，并存到集合中
 			ArrayList<RoadEdge> neighborEdges = new ArrayList<RoadEdge>();
 			
 			int neighborPointNumber=neighborPoints.size();
@@ -84,10 +140,10 @@ public class MapMatch {
 			}
 				
 			RoadPoint temp3=null;
+			int roadEdgeNumber=roadEdges.size();
+			
 			for(int j=0;j<neighborPointNumber;j++) {
 			    temp3=neighborPoints.get(j);
-				
-				int roadEdgeNumber=roadEdges.size();
 				RoadEdge temp4=null;
 				for(int m=0;m<roadEdgeNumber;m++ ) {
 					temp4 = roadEdges.get(m);
@@ -99,9 +155,11 @@ public class MapMatch {
 
 			}//得到附近的路近段
 			
-			//根据附近路径段开始匹配
+			//4.计算附近路段的权重，寻找最优路径段
 			int neighborRoadEdgeNumber = neighborEdges.size();
-			double miniDistance=10000;
+			double thetaFactor = 0.44;
+			double distanceFactor = 0.56;
+			double probability = 100000;
 			RoadEdge temp5=null;
 			RoadPoint r1 = null;
 			RoadPoint r2 =null;
@@ -111,23 +169,52 @@ public class MapMatch {
 			for(int n=0;n<neighborRoadEdgeNumber;n++) {
 				r1 = neighborEdges.get(n).getP1();
 				r2 = neighborEdges.get(n).getP2();
-				double distance = MatchUtility.getPointToSegDistance(r1, r2, temp1);
-				if(miniDistance > distance) {
-					miniDistance=distance;
-					temp5=neighborEdges.get(n);
+				double distance = MatchUtility.getPointToSegDistance(r1, r2, temp1)*111000;
+//				System.out.println(distance);
+				double deltaTheta = MatchUtility.getDeltaTheta(r1, r2, temp1.getHeading());
+//				Math.toDegrees(deltaTheta)*thetaFactor
+//				System.out.println(Math.toDegrees(deltaTheta));
+				double matchProbability = distance * distanceFactor + Math.toDegrees(deltaTheta) * thetaFactor;
+//                System.out.println(Math.sin(deltaTheta));
+
+				if (matchProbability < probability) {
+					probability = matchProbability;
+					temp5 = neighborEdges.get(n);
 //					System.out.println(n);
 				}
 			}//得到最匹配路近段
 
-
-			System.out.println("before"+trackPoints.get(i).getLongitude()+" "+trackPoints.get(i).getLatitude());
+			// 5.根据最优路径段，计算垂足，得到匹配点
+//			System.out.println("before"+trackPoints.get(i).getLongitude()+" "+trackPoints.get(i).getLatitude());
+//			double[] point3 = { temp1.getLongitude(), temp1.getLatitude() };
 			TrackPoint matchResult = MatchUtility.getFoot(temp5.getP1(), temp5.getP2(), temp1);
+//			double[] point4 = { temp1.getLongitude(), temp1.getLatitude() };
+//			plot.addLinePlot("", green, point3, point4);
 
-			System.out.println("数组中"+trackPoints.get(i).getLongitude()+" "+trackPoints.get(i).getLatitude());
+//			System.out.println("数组中"+trackPoints.get(i).getLongitude()+" "+trackPoints.get(i).getLatitude());
 			
 
 
 		}
+//		for (int i = 0; i < trackPoints.size() - 1; i++) {
+//			TrackPoint Point1 = trackPoints.get(i);
+//			TrackPoint Point2 = trackPoints.get(i + 1);
+//			double[] point1 = { Point1.getLongitude(), Point1.getLatitude() };
+//			double[] point2 = { Point2.getLongitude(), Point2.getLatitude() };
+//
+//			plot.addLinePlot("", red, point1, point2);
+//		}
+//		// set the label of the plot panel
+//		plot.setAxisLabel(0, " longitude");
+//		plot.setAxisLabel(1, "latuitude");
+//		plot.setSize(1200, 1200);
+//		// create a frame
+//		JFrame frame = new JFrame("A plot test");
+//		// set the size of the frame
+//		frame.setSize(1200, 1200);
+//		// set the content of the frame as the plot panel
+//		frame.setContentPane(plot);
+//		frame.setVisible(true);
 	
 		return trackPoints;
 	
@@ -142,8 +229,28 @@ public class MapMatch {
 //		temp.setLatitude(5);;
 //		System.out.println(test.get(0)+" "+temp);
 		
-		String test="117.34716475009918";
-		System.out.println(Double.parseDouble(test));
+//		String test="117.34716475009918";
+//		System.out.println(Double.parseDouble(test));
+		
+		
+		// 读取轨迹数据
+		ArrayList<Track> tracks = null;
+		try {
+			tracks = pathSmooth.ReadData.readData("track/Track_de_1.txt");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// 读取路网数据
+		Road road = null;
+		try {
+			road = RoadXMLUtility.ReadXML();
+		} catch (DocumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		SimpleMapMatch(road,tracks.get(0).getTrackPoints());
 		
 		
 	}

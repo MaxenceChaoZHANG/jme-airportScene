@@ -71,7 +71,7 @@ public class MapMatchTest {
 			}
 
 			
-			trackPoints=MapMatch.SimpleMapMatch(roadPoints, roadEdges, tracks.get(0).getTrackPoints());
+			trackPoints=MapMatch.SimpleMapMatch(road, tracks.get(0).getTrackPoints());
 			for (int i = 0; i < trackPoints.size()-1; i++) {
 				TrackPoint Point1 = trackPoints.get(i);
 				TrackPoint Point2 = trackPoints.get(i+1);		

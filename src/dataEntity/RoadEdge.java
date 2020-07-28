@@ -7,7 +7,20 @@ public class RoadEdge {
 	
 	private RoadPoint p1;
 	private RoadPoint p2;
+	
+	private double dist;
+	
+    public double getDist() {
+		return dist;
+	}
 
+
+	public void computeDist() {
+    	dist=Math.sqrt(
+    			Math.pow(p1.getLatitude()-p2.getLatitude(),2)+
+    			Math.pow(p1.getLongitude()-p2.getLongitude(),2));
+//    	System.out.println(dist);
+    }
 
 
 	public RoadEdge() {
