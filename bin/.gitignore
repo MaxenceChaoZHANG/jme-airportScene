@@ -13,13 +13,9 @@
 /AirportInfo2.xml
 /defaultProbe.j3o
 /roadPoint.txt
+/roadTest.xml
 /13_taxi_79a03_test.txt
 /14_taxi_6d943_headingTest.txt
-/AllWeatherTest.txt
-/AllWeatherTest2.txt
-/DSFAnalyser/
-/Data.txt
-/Test.txt
 /Track_11_land_781143.txt
 /Track_11_taxi_781143_last.txt
 /Track_11_taxi_781143_short.txt
@@ -36,6 +32,12 @@
 /Track_6_land_7806bf.txt
 /Track_7_takeoff_7808c9_bad.txt
 /Track_7_taxi_7808c9_bad.txt
+/roadmap.xml
+/AllWeatherTest.txt
+/AllWeatherTest2.txt
+/DSFAnalyser/
+/Data.txt
+/Test.txt
 /Track_8_land_780be1_bad.txt
 /Track_9_takeoff_780d4d_a_little_bad.txt
 /Track_de_1.txt
@@ -49,7 +51,5 @@
 /mapMatch/
 /modelLoadUtility/
 /pathSmooth/
-/roadTest.xml
-/roadmap.xml
 /scene/
 /ui/

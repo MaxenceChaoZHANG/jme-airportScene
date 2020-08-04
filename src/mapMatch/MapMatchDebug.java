@@ -23,6 +23,8 @@ import mapMatch.road.RoadXMLUtility;
 public class MapMatchDebug {
 
 	public static void main(String[] args) {
+		
+//		double s=0;
 		// 读取轨迹数据
 		ArrayList<Track> tracks = null;
 		try {
@@ -75,14 +77,14 @@ public class MapMatchDebug {
 
 		// 绘制原始轨迹（蓝色线条）
 		ArrayList<TrackPoint> trackPoints = tracks.get(0).getTrackPoints();
-		for (int i = 0; i < trackPoints.size() - 1; i++) {
-			TrackPoint Point1 = trackPoints.get(i);
-			TrackPoint Point2 = trackPoints.get(i + 1);
-			double[] point1 = { Point1.getLongitude(), Point1.getLatitude() };
-			double[] point2 = { Point2.getLongitude(), Point2.getLatitude() };
-
-			plot.addLinePlot("", blue, point1, point2);
-		}
+//		for (int i = 0; i < trackPoints.size() - 1; i++) {
+//			TrackPoint Point1 = trackPoints.get(i);
+//			TrackPoint Point2 = trackPoints.get(i + 1);
+//			double[] point1 = { Point1.getLongitude(), Point1.getLatitude() };
+//			double[] point2 = { Point2.getLongitude(), Point2.getLatitude() };
+//
+//			plot.addLinePlot("", blue, point1, point2);
+//		}
 
 		// 创建geoHashHepler对象
 //		GeoHashHelper geoHash = new GeoHashHelper();
@@ -92,7 +94,7 @@ public class MapMatchDebug {
 		// 遍历每一个轨迹点进行地图匹配
 		int trackPointNumber = trackPoints.size();
 		TrackPoint temp1 = null;
-		for (int i = 0; i < trackPointNumber; i++) {
+		for (int i = 30; i < trackPointNumber; i++) {
 			// 1.获取当前轨迹点附近的9个geohashCode
 			temp1 = trackPoints.get(i);
 			geoHashCode = geoHash.aroundWith7Char(temp1.getLatitude(), temp1.getLongitude());
@@ -188,7 +190,7 @@ public class MapMatchDebug {
 //				System.out.println(distance);
 				double deltaTheta = MatchUtility.getDeltaTheta(r1, r2, temp1.getHeading());
 //				Math.toDegrees(deltaTheta)*thetaFactor
-				System.out.println(Math.toDegrees(deltaTheta));
+//				System.out.println(Math.toDegrees(deltaTheta));
 				double matchProbability = distance * distanceFactor + Math.toDegrees(deltaTheta) * thetaFactor;
 //                System.out.println(Math.sin(deltaTheta));
 
@@ -201,28 +203,31 @@ public class MapMatchDebug {
 
 			// 5.根据最优路径段，计算垂足，得到匹配点
 			// 绘制轨迹点变化情况
-			double[] point3 = { temp1.getLongitude(), temp1.getLatitude() };
-			TrackPoint matchResult = MatchUtility.getFoot(temp5.getP1(), temp5.getP2(), temp1);
-			double[] point4 = { temp1.getLongitude(), temp1.getLatitude() };
-			plot.addLinePlot("", green, point3, point4);
+//			double[] point3 = { temp1.getLongitude(), temp1.getLatitude() };
+//			TrackPoint matchResult = MatchUtility.getFoot(temp5.getP1(), temp5.getP2(), temp1);
+//			double[] point4 = { temp1.getLongitude(), temp1.getLatitude() };
+//			plot.addLinePlot("", green, point3, point4);
 
 			// 绘制最佳路径段
-//			r1 = roadPoints.get(temp5.getIndexINlist1());
-//			r2 = roadPoints.get(temp5.getIndexINlist2());		
-//			double[] point1= {r1.getLongitude(),r1.getLatitude()};
-//			double[] point2= {r2.getLongitude(),r2.getLatitude()};	
-//			plot.addLinePlot("", red, point1, point2);	
+			r1=temp5.getP1();
+			r2 = temp5.getP2();		
+//			s=s+Math.sqrt(Math.pow(r1.getLatitude() -r2.getLatitude(), 2) + Math.pow(r1.getLongitude() - r2.getLongitude(), 2));
+//			System.out.println(Math.sqrt(Math.pow(r1.getLatitude() -r2.getLatitude(), 2) + Math.pow(r1.getLongitude() - r2.getLongitude(), 2)));
+			double[] point1= {r1.getLongitude(),r1.getLatitude()};
+			double[] point2= {r2.getLongitude(),r2.getLatitude()};	
+			plot.addLinePlot("", red, point1, point2);	
 
 		}
+//		System.out.println("s:"+s);
 
-		for (int i = 0; i < trackPoints.size() - 1; i++) {
-			TrackPoint Point1 = trackPoints.get(i);
-			TrackPoint Point2 = trackPoints.get(i + 1);
-			double[] point1 = { Point1.getLongitude(), Point1.getLatitude() };
-			double[] point2 = { Point2.getLongitude(), Point2.getLatitude() };
-
-			plot.addLinePlot("", red, point1, point2);
-		}
+//		for (int i = 0; i < trackPoints.size() - 1; i++) {
+//			TrackPoint Point1 = trackPoints.get(i);
+//			TrackPoint Point2 = trackPoints.get(i + 1);
+//			double[] point1 = { Point1.getLongitude(), Point1.getLatitude() };
+//			double[] point2 = { Point2.getLongitude(), Point2.getLatitude() };
+//
+//			plot.addLinePlot("", red, point1, point2);
+//		}
 
 		// set the label of the plot panel
 		plot.setAxisLabel(0, " longitude");

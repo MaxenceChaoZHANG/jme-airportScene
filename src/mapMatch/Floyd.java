@@ -2,6 +2,7 @@ package mapMatch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.dom4j.DocumentException;
 
@@ -121,6 +122,7 @@ public class Floyd {
 			Arrays.fill(pre[i], i);
 		}
 
+
 	}
 
 	/**
@@ -148,98 +150,45 @@ public class Floyd {
 	}
 	/**
 	 * 寻找距离起点start距离接近s的两个点，返回下标
+	 * @return 
 	 * 
 	 */
-    public int[] findNearstPoint(int start,double s) {
-    	double  d1=0; //存储较大的距离值
-    	double	d2=0;
-    	int result1=-1;//存储较大的距离值对应的索引
-    	int result2=-1;
-    	
+    public  ArrayList<Integer> findNearstPoint(int start,double s) {
+     	ArrayList<Integer> result =new ArrayList<Integer>();
+     	
+     	ArrayList<Double> result1 =new ArrayList<Double>();
+     	
     	for(int i=0;i<dis.length;i++) {
     		if(dis[start][i]>s) {
-    			if(d1==0) {
-    				d1=dis[start][i];
-    				result1=i;
-    				continue;
-    			}
-    			if(d2==0) {
-    				d2=dis[start][i];
-    				result2=i;
-    				continue;
-    			}
-    			if(d1<d2) {
-    				double temp=d1;
-    				int tempIndex=result1;
-    				d1=d2;
-    				result1=result2;
-    				d2=temp;
-    				result2=tempIndex;
-    			}
-    			//如果小于d1
-    			if(dis[start][i]<d1) {
-    				d1=dis[start][i];
-    				result1=i;
-    			}
+    			result1.add(dis[start][i]);
     		}
     	}
-    	//确保d1>d2
-    	if(d1<d2) {
-			double temp=d1;
-			int tempIndex=result1;
-			d1=d2;
-			result1=result2;
-			d2=temp;
-			result2=tempIndex;
-		}
+    	Collections.sort(result1);
     	
-		return new int[] {result1,result2};
+    	for(int i=0;i<result1.size();i++) {
+    		for(int j=0;j<dis.length;j++) {
+        		if(dis[start][j]==result1.get(i)) {
+        			result.add(j);
+        			break;
+        		}
+        	}	
+    	}
+    	
+		return result;
     }
     
-    public double[] findNearstDis(int start,double s) {
-    	double  d1=0; //存储较大的距离值
-    	double	d2=0;
-    	int result1=-1;//存储较大的距离值对应的索引
-    	int result2=-1;
-    	
+    public ArrayList<Double> findNearstDis(int start,double s) {
+    	ArrayList<Double> result =new ArrayList<Double>();
+ 	
     	for(int i=0;i<dis.length;i++) {
     		if(dis[start][i]>s) {
-    			if(d1==0) {
-    				d1=dis[start][i];
-    				result1=i;
-    				continue;
-    			}
-    			if(d2==0) {
-    				d2=dis[start][i];
-    				result2=i;
-    				continue;
-    			}
-    			if(d1<d2) {
-    				double temp=d1;
-    				int tempIndex=result1;
-    				d1=d2;
-    				result1=result2;
-    				d2=temp;
-    				result2=tempIndex;
-    			}
-    			//如果小于d1,当前d1舍去
-    			if(dis[start][i]<d1) {
-    				d1=dis[start][i];
-    				result1=i;
-    			}
+    			result.add(dis[start][i]);
     		}
     	}
-    	//确保d1>d2
-    	if(d1<d2) {
-			double temp=d1;
-			int tempIndex=result1;
-			d1=d2;
-			result1=result2;
-			d2=temp;
-			result2=tempIndex;
-		}
+//    	System.out.println(result.get(0)>result.get(1));
+    	Collections.sort(result);
     	
-		return new double[] {d1,d2};
+		return result;
     }
     
     
@@ -301,10 +250,12 @@ public class Floyd {
 						dis[i][j] = len;// 更新距离
 						dis[j][i] = len;
 						pre[i][j] = pre[k][j];
-						pre[j][i] = pre[k][j];// 更新前驱顶点
+						pre[j][i] = pre[k][i];// 更新前驱顶点
+
 					}
 				}
 			}
 		}
 	}
+	
 }

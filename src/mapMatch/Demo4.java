@@ -1,8 +1,11 @@
-
 package mapMatch;
 
 import java.awt.Color;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFrame;
@@ -18,20 +21,26 @@ import dataEntity.TrackPoint;
 import mapMatch.geoHash.MyGeoHashHelper;
 import mapMatch.road.RoadXMLUtility;
 
-public class Demo3 {
+public class Demo4 {
 
 	Road road;// 读取路网数据
 	ArrayList<RoadPoint> roadPoints;
 	ArrayList<RoadWay> roadWays;
 	ArrayList<RoadEdge> roadEdges;
+
+	ArrayList<RoadPoint> trackRoadPoints = new ArrayList<RoadPoint>();
+	ArrayList<RoadEdge> trackRoadEdges = new ArrayList<RoadEdge>();
+
 	ArrayList<Track> tracks = null;// 读取轨迹数据
-	Floyd floydUtil;
+	ArrayList<TrackPoint> trackPoints;
+
+	Floyd globalFloydUtil;
+	Floyd trackFloydUtil;
 
 	public static void main(String[] args) {
-		Demo3 demo = new Demo3();
-		demo.search();;
-		
-//		System.out.println(demo.BiDimensionGauss(10,10));
+		Demo4 demo = new Demo4();
+		demo.search();
+//		demo.MapMatch();
 	}
 
 	class SearchResult {
@@ -40,8 +49,7 @@ public class Demo3 {
 		Point point;
 	}
 
-
-	public Demo3() {
+	public Demo4() {
 		// --------------------------初始化数据--------------------------
 		// 读取轨迹数据
 		tracks = null;
@@ -51,6 +59,7 @@ public class Demo3 {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		trackPoints = tracks.get(0).getTrackPoints();
 		// 读取路网数据
 		road = null;
 		try {
@@ -69,12 +78,22 @@ public class Demo3 {
 			roadEdges.addAll(roadWays.get(i).getRoadEdges());
 		}
 		// 初始化Floyd工具
-		floydUtil = new Floyd(roadPoints, roadEdges);
-		floydUtil.floyd();
-		
+		globalFloydUtil = new Floyd(roadPoints, roadEdges);
+		globalFloydUtil.floyd();
+
 	}
 
 	public void MapMatch() {
+
+		ArrayList<TrackPoint> copy = new ArrayList<TrackPoint>();
+		try {
+			copy = deepCopy(trackPoints);
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		copy = pathSmooth.DouglasPeuckerUtil.DouglasPeucker(copy,30);
 //--------------------------定义画板和颜色--------------------------	
 		Color red = new Color(255, 0, 0);// 定义颜色
 		Color black = new Color(0, 0, 0);
@@ -82,18 +101,6 @@ public class Demo3 {
 		Color green = new Color(0, 255, 0);
 		Plot2DPanel plot = new Plot2DPanel();// 定义画图面板
 		JFrame frame = new JFrame("A plot test");
-
-		// set the label of the plot panel
-		plot.setAxisLabel(0, " longitude");
-		plot.setAxisLabel(1, "latuitude");
-		plot.setSize(1200, 1200);
-		// create a frame
-		frame = new JFrame("A plot test");
-		// set the size of the frame
-		frame.setSize(1200, 1200);
-		// set the content of the frame as the plot panel
-		frame.setContentPane(plot);
-		frame.setVisible(true);
 
 //--------------------------绘制路网和原始轨迹--------------------------	
 		// 遍历路径边，绘制路径边（黑色线条）
@@ -109,28 +116,27 @@ public class Demo3 {
 			double[] point2 = { roadPoint2.getLongitude(), roadPoint2.getLatitude() };
 			plot.addLinePlot("", black, point1, point2);
 		}
-
 		// 绘制原始轨迹（蓝色线条）
-		ArrayList<TrackPoint> trackPoints = tracks.get(0).getTrackPoints();
-		for (int i = 0; i < trackPoints.size() - 1; i++) {
-			TrackPoint Point1 = trackPoints.get(i);
-			TrackPoint Point2 = trackPoints.get(i + 1);
-			double[] point1 = { Point1.getLongitude(), Point1.getLatitude() };
-			double[] point2 = { Point2.getLongitude(), Point2.getLatitude() };
 
-			plot.addLinePlot("", blue, point1, point2);
-		}
+//		for (int i = 0; i < copy.size() - 1; i++) {
+//			TrackPoint Point1 = copy.get(i);
+//			TrackPoint Point2 = copy.get(i + 1);
+//			double[] point1 = { Point1.getLongitude(), Point1.getLatitude() };
+//			double[] point2 = { Point2.getLongitude(), Point2.getLatitude() };
+//
+//			plot.addLinePlot("", blue, point1, point2);
+//		}
 //--------------------------地图匹配算法--------------------------	
 		// 创建geoHashHepler对象
 		MyGeoHashHelper geoHash = new MyGeoHashHelper();
 		List<String> geoHashCode = null;
 
 		// 遍历每一个轨迹点进行地图匹配
-		int trackPointNumber = trackPoints.size();
+		int trackPointNumber = copy.size();
 		TrackPoint temp1 = null;
 		for (int i = 0; i < trackPointNumber; i++) {
 			// 1.获取当前轨迹点附近的9个geohashCode
-			temp1 = trackPoints.get(i);
+			temp1 = copy.get(i);
 			geoHashCode = geoHash.aroundWith7Char(temp1.getLatitude(), temp1.getLongitude());
 			// 2.遍历网点，根据geoHash寻找距离当前轨迹点比较近的9个点
 			ArrayList<RoadPoint> neighborPoints = new ArrayList<RoadPoint>();
@@ -208,6 +214,8 @@ public class Demo3 {
 			int neighborRoadEdgeNumber = neighborEdges.size();
 			double thetaFactor = 0.47;
 			double distanceFactor = 0.53;
+//			double thetaFactor = 0.53;
+//			double distanceFactor = 0.47;
 			double probability = 100000;
 			RoadEdge temp5 = null;
 			RoadPoint r1 = null;
@@ -228,28 +236,98 @@ public class Demo3 {
 
 			// 5.根据最优路径段，计算垂足，得到匹配点
 			// 绘制轨迹点变化情况
-			double[] point3 = { temp1.getLongitude(), temp1.getLatitude() };
-			TrackPoint matchResult = MatchUtility.getFoot(temp5.getP1(), temp5.getP2(), temp1);
-			double[] point4 = { temp1.getLongitude(), temp1.getLatitude() };
-			plot.addLinePlot("", green, point3, point4);
+//			double[] point3 = { temp1.getLongitude(), temp1.getLatitude() };
+//			TrackPoint matchResult = MatchUtility.getFoot(temp5.getP1(), temp5.getP2(), temp1);
+//			double[] point4 = { temp1.getLongitude(), temp1.getLatitude() };
+//			plot.addLinePlot("", green, point3, point4);
 
 			// 绘制最佳路径段
-//			r1 = roadPoints.get(temp5.getIndexINlist1());
-//			r2 = roadPoints.get(temp5.getIndexINlist2());		
+			r1 = temp5.getP1();
+			r2 = temp5.getP2();
 //			double[] point1= {r1.getLongitude(),r1.getLatitude()};
 //			double[] point2= {r2.getLongitude(),r2.getLatitude()};	
 //			plot.addLinePlot("", red, point1, point2);	
 
-		}
-//--------------------------绘制地图匹配后的结果--------------------------	
-		for (int i = 0; i < trackPoints.size() - 1; i++) {
-			TrackPoint Point1 = trackPoints.get(i);
-			TrackPoint Point2 = trackPoints.get(i + 1);
-			double[] point1 = { Point1.getLongitude(), Point1.getLatitude() };
-			double[] point2 = { Point2.getLongitude(), Point2.getLatitude() };
+//			if(!trackRoadPoints.contains(r1)) {
+//				trackRoadPoints.add(r1);
+//			}
+//			if(!trackRoadPoints.contains(r2)) {
+//				trackRoadPoints.add(r2);
+//			}
+			if (!trackRoadEdges.contains(temp5)) {
+				if ((roadPoints.indexOf(r1) == 2181 && roadPoints.indexOf(r2) == 2182)
+						|| (roadPoints.indexOf(r1) == 2182 && roadPoints.indexOf(r2) == 2181)) {
+					System.out.println("????");
+					continue;
+				} else {
+					trackRoadEdges.add(temp5);
+				}
+			}
+		} // 结束地图匹配
+			// =======================开始填充空隙===============================
+		RoadPoint r1;
+		RoadPoint r2;
+		long id1;
+		long id2;
+		RoadEdge edge;
+		ArrayList<Integer> path;
+		ArrayList<RoadEdge> addEdge = new ArrayList<RoadEdge>();
 
-			plot.addLinePlot("", red, point1, point2);
+		for (int j = 0; j < trackRoadEdges.size() - 1; j++) {
+			// 取出连续两个个路径段，并各取出一点，寻找路径
+			r1 = trackRoadEdges.get(j).getP1();
+			r2 = trackRoadEdges.get(j + 1).getP1();
+			path = globalFloydUtil.findTheRoad(roadPoints.indexOf(r1), roadPoints.indexOf(r2));
+			// 根据路径结果，判断两个路径段是否连续，视情况进行补充
+			for (int m = 0; m < path.size() - 1; m++) {
+				r1 = roadPoints.get(path.get(m));
+				r2 = roadPoints.get(path.get(m + 1));
+				id1 = r1.getId();
+				id2 = r2.getId();
+				// 根据两个id找对应的路径段
+				for (int n = 0; n < roadEdges.size(); n++) {
+					edge = roadEdges.get(n);
+					if ((edge.getId1() == id1 && edge.getId2() == id2)
+							|| (edge.getId1() == id2 && edge.getId2() == id1)) {
+
+						if (!trackRoadEdges.contains(edge)) {// 是否需要补充
+							addEdge.add(edge);
+//							if(!trackRoadPoints.contains(r1)) {
+//								trackRoadPoints.add(r1);
+//							}
+//							if(!trackRoadPoints.contains(r2)) {
+//								trackRoadPoints.add(r2);
+//							}
+						}
+						break;
+					} // 补充完毕
+				} // 结束内层循环
+			}
+		} // 结束外层循环
+
+		trackRoadEdges.addAll(addEdge);
+
+		// 绘制最佳路径段
+		for(int i=0;i<trackRoadEdges.size();i++) {
+			edge=trackRoadEdges.get(i);
+			r1 = edge.getP1();
+			r2 = edge.getP2();		
+			double[] point1= {r1.getLongitude(),r1.getLatitude()};
+			double[] point2= {r2.getLongitude(),r2.getLatitude()};	
+			plot.addLinePlot("", red, point1, point2);	
 		}
+ 
+		// set the label of the plot panel
+		plot.setAxisLabel(0, " longitude");
+		plot.setAxisLabel(1, "latuitude");
+		plot.setSize(1200, 1200);
+		// create a frame
+		frame = new JFrame("A plot test");
+		// set the size of the frame
+		frame.setSize(1200, 1200);
+		// set the content of the frame as the plot panel
+		frame.setContentPane(plot);
+		frame.setVisible(true);
 
 	}
 
@@ -366,9 +444,12 @@ public class Demo3 {
 	}
 
 	public void search() {
-		
-		int NN=200;
-		ArrayList<TrackPoint> trackPoints=tracks.get(0).getTrackPoints();
+		MapMatch();
+		// 初始化Floyd工具
+		globalFloydUtil = new Floyd(roadPoints, trackRoadEdges);
+		globalFloydUtil.floyd();
+
+		int NN = 210;
 		// --------------------------定义画板和颜色--------------------------
 		Color red = new Color(255, 0, 0);// 定义颜色
 		Color black = new Color(0, 0, 0);
@@ -399,223 +480,162 @@ public class Demo3 {
 //			point2 = new double[] { trackPoints.get(i).getLatitude() };
 //			plot.addScatterPlot("", blue, point1, point2);
 //		}
-//		int ll = roadPoints.size();
-//		for (int i = 0; i < ll; i++) {
-//			point1 = new double[] { roadPoints.get(i).getLongitude() };
-//			point2 = new double[] { roadPoints.get(i).getLatitude() };
-//			plot.addScatterPlot("", red, point1, point2);
-//		}
-
-//		plot.addScatterPlot("",red, point1, point2);
-//		point1 = new double[] { roadPoints.get(2128).getLongitude() };
-//		point2 = new double[] { roadPoints.get(2128).getLatitude() };
-//		plot.addScatterPlot("", green, point1, point2);
-//		point1 = new double[] { roadPoints.get(2129).getLongitude() };
-//		point2 = new double[] { roadPoints.get(2129).getLatitude() };
-//		plot.addScatterPlot("", red, point1, point2);
-		
-
-		
+//		point1 = new double[] { roadPoints.get(2181).getLongitude() };
+//		point2 = new double[] { roadPoints.get(2181).getLatitude() };
+//		plot.addScatterPlot("", blue, point1, point2);
 
 		TrackPoint first = trackPoints.get(0);
 		SearchResult matchResult = MapMatchOnePoint(first);
 		Point firstMapMatch = matchResult.point;
 		RoadPoint r1 = matchResult.start;
 		RoadPoint r2 = matchResult.end;
-//        System.out.println("第一个点："+roadPoints.indexOf(r1)+" "+roadPoints.indexOf(r2));
 		// 计算报文位置点之间的总距离s2
 		double s2 = 0;
-		double s1=0,s3=0;
+		double s1 = 0, s3 = 0;
 		double averageV = 0;
 		double v1, v2;
 		long t1, t2;
 		double deltaT;
-		double lon1,lon2,lat1,lat2;
+		double lon1, lon2, lat1, lat2;
 		ArrayList<Double> segments = new ArrayList<Double>();
 		for (int i = 0; i < trackPointsNumber - 1; i++) {
 			v1 = trackPoints.get(i).getGroundSpeed();
 			v2 = trackPoints.get(i + 1).getGroundSpeed();
 			averageV = (v1 + v2) / 2.0 * 0.5144444;// 单位转换
-//			System.out.println("averageV:"+averageV);
 			t1 = trackPoints.get(i).getDate().getTime();
 			t2 = trackPoints.get(i + 1).getDate().getTime();
 			deltaT = (t2 - t1) / 1000.0f;// 秒
-//			System.out.println(deltaT);
-			s2 = (deltaT * averageV) / (Math.PI * 6371393 /180);// 单位转换
-//			s2 = (deltaT * averageV);
+			s2 = (deltaT * averageV) / (Math.PI * 6371393 / 180);// 单位转换
 //			System.out.println(deltaT +"*" +averageV+"="+deltaT * averageV);
 			segments.add(s2);
 //			System.out.println(s2);
-//			System.out.println(s2);
-			s1=s1+s2;
+			s1 = s1 + s2;
 //			lon1=trackPoints.get(i).getLongitude();
 //			lon2=trackPoints.get(i+1).getLongitude();
 //			lat1=trackPoints.get(i).getLongitude();
-//			lat2=trackPoints.get(i+1).getLongitude();
-//			
+//			lat2=trackPoints.get(i+1).getLongitude();	
 //			s3=s3+Math.sqrt(Math.pow(lon1-lon2,2)+Math.pow(lat1-lat2,2));
 		}
-		System.out.println("计算的总距离：s1="+s1);
+//		System.out.println("计算的总距离：s1="+s1);
 //		System.out.println("大致距离：s3="+s3);
 		int N = 50;
 		double l = 0.001;// 移动范围
 		double s = 0;
-		double delta = 0.001 / N;
+		double delta = 0.0003 / N;
 
 		ArrayList<SearchResult> resultPoints = new ArrayList<SearchResult>();
-		double maxProbability = java.lang.Double.MIN_VALUE;
+		double maxProbability = -1.0 / 0.0;
 		ArrayList<SearchResult> tempPoints = new ArrayList<SearchResult>();
-
-		
-		//循环中用到的临时变量
-		SearchResult pre=null;
-		SearchResult prepre=null;
-		SearchResult current=null;
-		SearchResult next=null;
-		for (int i = 1; i < 2; i++) {
+		// 循环中用到的临时变量
+		SearchResult pre = null;
+		SearchResult prepre = null;
+		SearchResult current = null;
+		SearchResult next = null;
+		for (int i = 1; i <5; i++) {
 			s = i * delta;
 			SearchResult[] ps = getPointsByDistance(firstMapMatch, r1, r2, s);
-
 			// 右移
 			tempPoints.add(ps[0]);
 			for (int n = 1; n < NN; n++) {
-				
 //				public Point getPointByStartPoint(Point start,RoadPoint r1,RoadPoint r2,double s,TrackPoint trackPoint) {
-				if(segments.get(n - 1)!=0&&n>=2) {
-					if(pre==null) {
-					   pre=tempPoints.get(n-1);
-					}else {
-						prepre=pre;
-						pre=tempPoints.get(n-1);
-					}	
+				if (segments.get(n - 1) != 0 && n >= 2) {
+					if (pre == null) {
+						pre = tempPoints.get(n - 1);
+					} else {
+						prepre = pre;
+						pre = tempPoints.get(n - 1);
+					}
 				}
-				current=tempPoints.get(n-1);
-				if(prepre==null) {
-					next=getPointByStartPoint(null,current.point, current.end, current.start, segments.get(n - 1),trackPoints.get(n));
-				}else {
-					next=getPointByStartPoint(prepre.point,current.point, current.end, current.start, segments.get(n - 1),trackPoints.get(n));	
+				current = tempPoints.get(n - 1);
+				//根据prepre是否存在传入不同参数
+				if (prepre == null) {
+					next = getPointByStartPoint(null, current.point, current.end, current.start, segments.get(n - 1),
+							trackPoints.get(n));
+				} else {
+					next = getPointByStartPoint(prepre.point, current.point, current.end, current.start,
+							segments.get(n - 1), trackPoints.get(n));
 				}
-				
-				if(n==81) {
-					System.out.println("--"+pre.point.x+" ,"+pre.point.y);
-					System.out.println(prepre.point.x+" ,"+prepre.point.y);
-				}
-//				System.out.println("tset:"+test);
 				tempPoints.add(next);
 			}
 			// 计算右移概率
 			double tempPro = 0;
-//			Point p1, p2;
-//			for (int m = 0; m < trackPointsNumber; m++) {
-//				p1 = tempPoints.get(m).point;
-//				p2 = new Point(trackPoints.get(m).getLongitude(), trackPoints.get(m).getLatitude());
-////				System.out.println(Math.log((BiDimensionGauss(p1.x - p2.x, p1.y - p2.y))));
-//				tempPro = tempPro+Math.log((BiDimensionGauss(p1.x - p2.x, p1.y - p2.y)));
-//			}
-			
-			if(i==1) {
-				System.out.println("-----"+tempPoints.size());
-				for (int q = 0; q <NN; q++) {
-					point1 = new double[] { tempPoints.get(q).point.x };
-					point2 = new double[] { tempPoints.get(q).point.y };
-					plot.addScatterPlot("", red, point1, point2);
-				}
+			Point p1, p2;
+			for (int m = 0; m < trackPointsNumber; m++) {
+				p1 = tempPoints.get(m).point;
+				p2 = new Point(trackPoints.get(m).getLongitude(), trackPoints.get(m).getLatitude());
+//				System.out.println(BiDimensionGauss(p1.x - p2.x, p1.y - p2.y));
+//				System.out.println(Math.log((BiDimensionGauss(p1.x - p2.x, p1.y - p2.y))));
+				tempPro = tempPro+Math.log((BiDimensionGauss(p1.x - p2.x, p1.y - p2.y)));
 			}
-			
-//			point1 = new double[] { tempPoints.get(79).point.x };
-//			point2 = new double[] { tempPoints.get(79).point.y };
-//			plot.addScatterPlot("1", black, point1, point2);
-//			point1 = new double[] { tempPoints.get(80).point.x };
-//			point2 = new double[] { tempPoints.get(80).point.y };
-//			plot.addScatterPlot("2", green, point1, point2);
-//			point1 = new double[] { tempPoints.get(81).point.x };
-//			point2 = new double[] { tempPoints.get(81).point.y };
-//			plot.addScatterPlot("3", blue, point1, point2);
-			
-			
-//			point1 = new double[] { 117.3486014689947 };
-//			point2 = new double[] { 39.12803129569337};
-//			plot.addScatterPlot("", black, point1, point2);
-//			
-//			//p1
-//			point1 = new double[] { 117.34853677777483 };
-//			point2 = new double[] { 39.127998945778224};
-//			plot.addScatterPlot("", green, point1, point2);
-//			//p2
-//			point1 = new double[] { 117.34865455383714};
-//			point2 = new double[] { 39.128081459381356};
-//			plot.addScatterPlot("",green, point1, point2);
-//			
-//			
-//			//r1
-//			point1 = new double[] { 117.3485828 };
-//			point2 = new double[] { 39.1280161};
-//			plot.addScatterPlot("", red, point1, point2);
-//			//r2
-//			point1 = new double[] { 117.3486258};
-//			point2 = new double[] { 39.1280511};
-//			plot.addScatterPlot("",red, point1, point2);
-			
-			
-//			System.out.println("tempro:"+tempPro);
-//			if (tempPro > maxProbability) {
-//				maxProbability = tempPro;
-//				resultPoints.clear();
-//				resultPoints.addAll(tempPoints);
-////				System.out.println(maxProbability);
+
+//			if (i == 1) {
+//				System.out.println("-----" + tempPoints.size());
+//				for (int q = 0; q < NN; q++) {
+//					point1 = new double[] { tempPoints.get(q).point.x };
+//					point2 = new double[] { tempPoints.get(q).point.y };
+//					plot.addScatterPlot("", red, point1, point2);
+//				}
 //			}
+
+			System.out.println("tempro:"+tempPro);
+			if (tempPro > maxProbability) {
+				maxProbability = tempPro;
+				resultPoints.clear();
+				resultPoints.addAll(tempPoints);
+//				System.out.println(maxProbability);
+			}
 			// 重置变量
 			tempPoints.clear();
 			tempPro = 0;
 
 			// 左移
-//			tempPoints.add(ps[1]);
-//			for (int n = 1; n < trackPointsNumber; n++) {
-//				pre=null;
-//				if(n>=2) {
-//				   pre=tempPoints.get(n-2);
-//				}
-//				current=tempPoints.get(n-1);
-//				if(pre==null) {
-//				    next=getPointByStartPoint(null,current.point, current.end, current.start, segments.get(n - 1),
-//						trackPoints.get(n));
-//				}else {
-//					next=getPointByStartPoint(pre.point,current.point, current.end, current.start, segments.get(n - 1),
-//							trackPoints.get(n));
-//				}
-//				
-////				System.out.println("tset2:"+test);
-//				tempPoints.add(next);
-//			}
+			tempPoints.add(ps[1]);
+			for (int n = 1; n < trackPointsNumber; n++) {
+				if (segments.get(n - 1) != 0 && n >= 2) {
+					if (pre == null) {
+						pre = tempPoints.get(n - 1);
+					} else {
+						prepre = pre;
+						pre = tempPoints.get(n - 1);
+					}
+				}
+				current = tempPoints.get(n - 1);
+				//根据prepre是否存在传入不同参数
+				if (prepre == null) {
+					next = getPointByStartPoint(null, current.point, current.end, current.start, segments.get(n - 1),
+							trackPoints.get(n));
+				} else {
+					next = getPointByStartPoint(prepre.point, current.point, current.end, current.start,
+							segments.get(n - 1), trackPoints.get(n));
+				}
+				tempPoints.add(next);
+			}
 			// 计算左移概率
-//			for (int m = 0; m < trackPointsNumber; m++) {
-//				p1 = tempPoints.get(m).point;
-//				p2 = new Point(trackPoints.get(m).getLongitude(), trackPoints.get(m).getLatitude());
-////				System.out.println(Math.log((BiDimensionGauss(p1.x - p2.x, p1.y - p2.y))));
-//				tempPro = tempPro+Math.log( BiDimensionGauss(p1.x - p2.x, p1.y - p2.y));
-//			}
-//			System.out.println("tempro2:"+tempPro);
-//			if (tempPro > maxProbability) {
-//				maxProbability = tempPro;
-//				resultPoints.clear();
-//				resultPoints.addAll(tempPoints);
-////				System.out.println(maxProbability);
-//
-//			}
+			for (int m = 0; m < trackPointsNumber; m++) {
+				p1 = tempPoints.get(m).point;
+				p2 = new Point(trackPoints.get(m).getLongitude(), trackPoints.get(m).getLatitude());
+//				System.out.println(Math.log((BiDimensionGauss(p1.x - p2.x, p1.y - p2.y))));
+				tempPro = tempPro+Math.log( BiDimensionGauss(p1.x - p2.x, p1.y - p2.y));
+			}
+			System.out.println("tempro2:"+tempPro);
+			if (tempPro > maxProbability) {
+				maxProbability = tempPro;
+				resultPoints.clear();
+				resultPoints.addAll(tempPoints);
+//				System.out.println(maxProbability);
+			}
 
 			// 重置变量
 			tempPoints.clear();
-
 		}
-        System.out.println(resultPoints.size());
+		System.out.println(resultPoints.size());
 		// 绘制地图匹配点位置（紅色）
-//		for (int i = 0; i < resultPoints.size(); i++) {
-//			System.out.println("绘制结果");
-//			point1 = new double[] { resultPoints.get(i).point.x };
-//			point2 = new double[] { resultPoints.get(i).point.y };
-//			plot.addScatterPlot("", red, point1, point2);
-//		}
-		
+		for (int i = 0; i < resultPoints.size(); i++) {
+			point1 = new double[] { resultPoints.get(i).point.x };
+			point2 = new double[] { resultPoints.get(i).point.y };
+			plot.addScatterPlot("", red, point1, point2);
+		}
+
 		// set the label of the plot panel
 		plot.setAxisLabel(0, " longitude");
 		plot.setAxisLabel(1, "latuitude");
@@ -632,16 +652,15 @@ public class Demo3 {
 	/**
 	 * 根据起始路径段和起始点，在路网中寻找其他轨迹点的位置（距离s）
 	 * 
-	 * @param current      路径上一点
+	 * @param current    路径上一点
 	 * @param r1         给定路径端点
 	 * @param r2         给定路径端点
 	 * @param s          距离
 	 * @param trackPoint 参保报文位置点
 	 * @return 结果
 	 */
-	public SearchResult getPointByStartPoint(Point pre,Point current, RoadPoint r1, RoadPoint r2, double s, TrackPoint trackPoint) {
-		
-		
+	public SearchResult getPointByStartPoint(Point pre, Point current, RoadPoint r1, RoadPoint r2, double s,
+			TrackPoint trackPoint) {
 
 		// 在当前路径段上试图找到移动后的两个初始点
 		SearchResult[] PointInSegment = getPointsInSegment(s, r1, r2, current);
@@ -651,9 +670,7 @@ public class Demo3 {
 			if (PointInSegment[j] == null)
 				nullNumber++;
 		}
-		if(tracks.get(0).getTrackPoints().indexOf(trackPoint)==81) {
-			System.out.println(nullNumber);
-		}
+
 //		System.out.println("nullnumber "+nullNumber);
 		// 如果不足两个，则在当前路径段之外寻找
 		if (nullNumber == 1) {
@@ -682,19 +699,21 @@ public class Demo3 {
 					}
 				}
 			}
-			
+
 			// 结束nullNumber==1
 		} else if (nullNumber == 2) {
 			// 通过floyd寻找另一点
 			// 判断使用当前路径段左端点还是右端点
-			double dis1 = Math.sqrt(Math.pow(r1.getLatitude() - current.y, 2) + Math.pow(r1.getLongitude() - current.x, 2));
-			double dis2 = Math.sqrt(Math.pow(r2.getLatitude() - current.y, 2) + Math.pow(r2.getLongitude() - current.x, 2));
+			double dis1 = Math
+					.sqrt(Math.pow(r1.getLatitude() - current.y, 2) + Math.pow(r1.getLongitude() - current.x, 2));
+			double dis2 = Math
+					.sqrt(Math.pow(r2.getLatitude() - current.y, 2) + Math.pow(r2.getLongitude() - current.x, 2));
 			double ss = s;
 //			System.out.println("ss:"+ss);
 			// 在此情况下只返回一个点
 			SearchResult[] anotherPointInSegment1 = getPointOutSegment(r1, r1, r2, ss - dis1);// 向一边找点
 			SearchResult[] anotherPointInSegment2 = getPointOutSegment(r2, r1, r2, ss - dis2);// 向另一边找点
-			
+
 			// 将该点加入到外层数组的null
 			for (int n = 0; n < 2; n++) {
 				if (anotherPointInSegment1[n] != null) {
@@ -708,14 +727,12 @@ public class Demo3 {
 			}
 		} // 结束nullNumber==2
 			// 此时PointInSegment数组中一定包含两个移动后的点
-		
 
-		
 		double bestDis = 0;
 		SearchResult bestPoint;
-		double dis1,dis2;
-		double preDis=0;
-		if(pre==null) {//不存在前一点时，利用报文位置点经行取舍
+		double dis1, dis2;
+		double preDis = 0;
+		if (pre == null) {// 不存在前一点时，利用报文位置点经行取舍
 			dis1 = Math.pow(PointInSegment[0].point.x - trackPoint.getLongitude(), 2)
 					+ Math.pow(PointInSegment[0].point.y - trackPoint.getLatitude(), 2);
 			dis2 = Math.pow(PointInSegment[1].point.x - trackPoint.getLongitude(), 2)
@@ -728,26 +745,10 @@ public class Demo3 {
 				bestPoint = PointInSegment[0];
 			}
 
-		}else {//存在前一点时，利用前一点位置点经行取舍
-			
-//			preDis=Math.sqrt(Math.pow(pre.x - current.x, 2)+ Math.pow(pre.y - current.y, 2));
-//			System.out.println("=="+preDis);
-			if(tracks.get(0).getTrackPoints().indexOf(trackPoint)==81) {
-				System.out.println(pre.x+","+pre.y);
-				System.out.println(current.x+","+current.y);
-				
-				System.out.println(PointInSegment[0].point.x+","+PointInSegment[0].point.y);
-				System.out.println(PointInSegment[1].point.x+","+PointInSegment[1].point.y);
-				
-				System.out.println(r1.getLongitude()+","+r1.getLatitude());
-				System.out.println(r2.getLongitude()+","+r2.getLatitude());
-				
-			}
-			
-			dis1 = Math.pow(PointInSegment[0].point.x - pre.x, 2)
-					+ Math.pow(PointInSegment[0].point.y - pre.y, 2);
-			dis2 = Math.pow(PointInSegment[1].point.x - pre.x, 2)
-					+ Math.pow(PointInSegment[1].point.y -pre.y, 2);
+		} else {// 存在前一点时，利用前一点位置点经行取舍
+
+			dis1 = Math.pow(PointInSegment[0].point.x - pre.x, 2) + Math.pow(PointInSegment[0].point.y - pre.y, 2);
+			dis2 = Math.pow(PointInSegment[1].point.x - pre.x, 2) + Math.pow(PointInSegment[1].point.y - pre.y, 2);
 			if (dis1 > dis2) {
 				bestDis = dis1;
 				bestPoint = PointInSegment[0];
@@ -755,10 +756,7 @@ public class Demo3 {
 				bestDis = dis2;
 				bestPoint = PointInSegment[1];
 			}
-			
-
 		}
-//		System.out.println("--------------------");
 		return bestPoint;
 
 	}
@@ -800,14 +798,7 @@ public class Demo3 {
 			}
 			// 在此情况下只返回一个点
 			SearchResult[] anotherPointInSegment = getPointOutSegment(temp, r1, r2, ss);
-			
-//			int num1 = 0;
-//			for (int j = 0; j < 2; j++) {
-//				if (anotherPointInSegment[j] == null)
-//					num1++;
-//			}
-//			System.out.println("num1:"+num1);
-			
+
 			// 将该点加入到外层数组的null
 			for (int m = 0; m < 2; m++) {
 				if (PointInSegment[m] == null) {
@@ -828,20 +819,7 @@ public class Demo3 {
 			// 在此情况下只返回一个点
 			SearchResult[] anotherPointInSegment1 = getPointOutSegment(r1, r1, r2, ss - dis1);// 向一边找点
 			SearchResult[] anotherPointInSegment2 = getPointOutSegment(r2, r1, r2, ss - dis2);// 向另一边找点
-			
-//			int num2 = 0;
-//			for (int j = 0; j < 2; j++) {
-//				if (anotherPointInSegment1[j] == null)
-//					num2++;
-//			}
-//			System.out.println("num2:"+num2);
-//			
-//			int num3 = 0;
-//			for (int j = 0; j < 2; j++) {
-//				if (anotherPointInSegment1[j] == null)
-//					num3++;
-//			}
-//			System.out.println("num3:"+num3);
+
 			// 将该点加入到外层数组的null
 			for (int n = 0; n < 2; n++) {
 				if (anotherPointInSegment1[n] != null) {
@@ -868,7 +846,7 @@ public class Demo3 {
 	 * @return 路径端点数组
 	 */
 	public SearchResult[] getPointOutSegment(RoadPoint r, RoadPoint r1, RoadPoint r2, double s) {
-		
+
 		// 通过floyd寻找另一点
 		ArrayList<Double> dis = getPointDistanceByFloyd(r, s);// 记录folyd得到点的到temp端点的距离(排好序）
 
@@ -879,27 +857,25 @@ public class Demo3 {
 		int r_index = roadPoints.indexOf(r);
 		int r1_index = roadPoints.indexOf(r1);
 		int r2_index = roadPoints.indexOf(r2);
-		
+
 		RoadPoint temp2 = null;// 记录folyd得到的点中较好的一个
 		double min = 0;// 记录folyd较好的一个点的到端点的距离
-		
+
 		int floyd_index;
 		ArrayList<Integer> path1;
-		for(int i=0;i<PointByFloyd.size();i++) {			
-			floyd_index = roadPoints.indexOf(PointByFloyd.get(i));		
-			path1 = floydUtil.findTheRoad(floyd_index, r_index);
-	
-			if (path1.contains(r1_index)&& path1.contains(r2_index)) {
+		for (int i = 0; i < PointByFloyd.size(); i++) {
+			floyd_index = roadPoints.indexOf(PointByFloyd.get(i));
+			path1 = globalFloydUtil.findTheRoad(floyd_index, r_index);
+
+			if (path1.contains(r1_index) && path1.contains(r2_index)) {
 				continue;
-			}else {
-				temp2=PointByFloyd.get(i);
-				min=dis.get(i);
+			} else {
+				temp2 = PointByFloyd.get(i);
+				min = dis.get(i);
 				break;
-				
+
 			}
 		}
-			
-//		System.out.println(temp2);
 		// 找到folyd点对应的两个路径段（特殊情况会多于2个）
 		ArrayList<RoadEdge> deuxEdge = new ArrayList<RoadEdge>();
 		int roadEdgeNumber = roadEdges.size();
@@ -913,8 +889,10 @@ public class Demo3 {
 				deuxEdge.add(tempEdge);
 			}
 		}
+
 		// 筛选folyd点对应的两个路径段
 		roadEdgeNumber = deuxEdge.size();
+
 		RoadEdge bestEdge = null;
 		double tempdis = 100;// 设置一个较大的值
 		double dis1 = 0;
@@ -1000,44 +978,68 @@ public class Demo3 {
 
 	/**
 	 * 已知路径段,上寻找距离路径段接近距离为s的点 （每个路近段端点对应两个） 找到返回Point数组,否则返回null
-	 * @return 
+	 * 
+	 * @return
 	 */
-	public  ArrayList<RoadPoint> getPointsByFloyd(RoadPoint p1, double s) {
+	public ArrayList<RoadPoint> getPointsByFloyd(RoadPoint p1, double s) {
 		int start = roadPoints.indexOf(p1);
-		 ArrayList<Integer> result1 = floydUtil.findNearstPoint(start, s);
-		 
-		 ArrayList<RoadPoint> result =new ArrayList<RoadPoint>();
-		 
-		 for(int i=0;i<result1.size();i++) {
-			 
-			 result.add(roadPoints.get(result1.get(i)));
-		 }
-		
+		ArrayList<Integer> result1 = globalFloydUtil.findNearstPoint(start, s);
+
+		ArrayList<RoadPoint> result = new ArrayList<RoadPoint>();
+
+		for (int i = 0; i < result1.size(); i++) {
+
+			result.add(roadPoints.get(result1.get(i)));
+		}
+
 		return result;
 	}
 
 	/**
 	 * 已知路径段,上寻找距离路径段接近距离为s的点的距离值 （每个路近段端点对应两个） 找到返回double距离值数组,否则返回null
-	 * @return 
+	 * 
+	 * @return
 	 */
-	public  ArrayList<Double> getPointDistanceByFloyd(RoadPoint p1, double s) {
+	public ArrayList<Double> getPointDistanceByFloyd(RoadPoint p1, double s) {
 		int start = roadPoints.indexOf(p1);
-		return floydUtil.findNearstDis(start, s);
+		return globalFloydUtil.findNearstDis(start, s);
 	}
 
 	public double getDisBeyweenTwoPointByFloyd(RoadPoint p1, RoadPoint p2) {
 		int start = roadPoints.indexOf(p1);
 		int end = roadPoints.indexOf(p2);
-		return floydUtil.findDis(start, end);
+		return globalFloydUtil.findDis(start, end);
 	}
 
 	/**
 	 * 二维高斯分布，0均值，x，y方向方差相等
 	 */
-	double sigma = 10/(Math.PI * 6371393 /180);
+//	double sigma = 10 / (Math.PI * 6371393 / 180);
+	double sigma = 10;
 
 	public double BiDimensionGauss(double x, double y) {
+		x=x*111000;
+		y=y*111000;
+		
 		return 1.0 / (2.0 * Math.PI * Math.pow(sigma, 2))
 				* Math.exp(-(Math.pow(x, 2) + Math.pow(y, 2)) / (2.0 * Math.pow(sigma, 2)));
+		
+//		return 1.0 / (2.0 * Math.PI * Math.pow(sigma, 2))
+//				* Math.exp(-(Math.pow(x, 2) + Math.pow(y, 2)) / (2.0 * Math.pow(sigma, 2)));
+	}
+
+	/**
+	 * 使用序列化手段，完成轨迹点的复制
+	 */
+	public static <T> ArrayList<T> deepCopy(ArrayList<T> src) throws IOException, ClassNotFoundException {
+		ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+		ObjectOutputStream out = new ObjectOutputStream(byteOut);
+		out.writeObject(src);
+
+		ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+		ObjectInputStream in = new ObjectInputStream(byteIn);
+
+		ArrayList<T> copy_list = (ArrayList<T>) in.readObject();
+		return copy_list;
 	}
 }
